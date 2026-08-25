@@ -61,7 +61,7 @@ def test_loaded_runtime_can_generate(tmp_path, monkeypatch) -> None:
 
     generated = runtime.generate(
         prompt="a",
-        max_new_tokens=2,
+        max_tokens=2,
         temperature=0,
     )
 

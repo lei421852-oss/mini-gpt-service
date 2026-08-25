@@ -18,18 +18,17 @@ class GPTInferenceRuntime:
     def generate(
         self,
         prompt: str,
-        max_new_tokens: int,
+        max_tokens: int,
         temperature: float = 1.0,
         top_k: int | None = None,
     ) -> str:
         input_ids = torch.tensor(
             [self.tokenizer.encode(prompt)],
             dtype=torch.long,
-            device=self.device,
-        )
+        ).to(self.device)
         output_ids = self.model.generate(
             input_ids,
-            max_new_tokens=max_new_tokens,
+            max_new_tokens=max_tokens,
             temperature=temperature,
             top_k=top_k,
         )

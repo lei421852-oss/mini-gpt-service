@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="mini-gpt-service")
+from app.api.routes.generation import router as generation_router
+from app.api.routes.health import router as health_router
+from app.core.lifespan import lifespan
 
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
-
+app = FastAPI(
+    title="mini-gpt-service",
+    lifespan=lifespan,
+)
+app.include_router(health_router)
+app.include_router(generation_router)

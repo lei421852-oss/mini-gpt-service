@@ -1,3 +1,6 @@
+import pytest
+
+from app.core.exceptions import UnknownCharacterError
 from app.model.tokenizer import CharTokenizer
 
 
@@ -24,3 +27,16 @@ def test_encode_decode_round_trip() -> None:
     text = "a cab\n"
 
     assert tokenizer.decode(tokenizer.encode(text)) == text
+
+
+def test_encode_raises_unknown_character_error() -> None:
+    tokenizer = make_tokenizer()
+
+    with pytest.raises(
+        UnknownCharacterError,
+        match="Unsupported character: '你'",
+    ) as exc_info:
+        tokenizer.encode("a你")
+
+    assert exc_info.value.character == "你"
+    assert isinstance(exc_info.value.__cause__, KeyError)

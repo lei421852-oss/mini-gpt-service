@@ -10,3 +10,5 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     text: str
+    generated_tokens: int
+    latency_ms: float

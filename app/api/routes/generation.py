@@ -17,10 +17,14 @@ def generate(
         Depends(get_generation_service),
     ],
 ) -> GenerateResponse:
-    text = service.generate(
+    result = service.generate(
         prompt=request.prompt,
         max_tokens=request.max_tokens,
         temperature=request.temperature,
         top_k=request.top_k,
     )
-    return GenerateResponse(text=text)
+    return GenerateResponse(
+        text=result.text,
+        generated_tokens=result.generated_tokens,
+        latency_ms=result.latency_ms,
+    )

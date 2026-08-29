@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 
 import app.core.lifespan as lifespan_module
 from app.api.dependencies import get_generation_service
+from app.core.exceptions import UnknownCharacterError
 from app.main import app
+from app.services.generation_result import GenerationResult
 
 
 class FakeRuntime:
@@ -19,6 +21,9 @@ class FakeRuntime:
         temperature: float,
         top_k: int | None,
     ) -> str:
+        if "你" in prompt:
+            raise UnknownCharacterError("你")
+
         self.call = {
             "prompt": prompt,
             "max_tokens": max_tokens,
@@ -38,14 +43,18 @@ class FakeGenerationService:
         max_tokens: int,
         temperature: float,
         top_k: int | None,
-    ) -> str:
+    ) -> GenerationResult:
         self.call = {
             "prompt": prompt,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "top_k": top_k,
         }
-        return "fake response"
+        return GenerationResult(
+            text="fake response",
+            generated_tokens=7,
+            latency_ms=12.5,
+        )
 
 
 @pytest.fixture
@@ -82,7 +91,29 @@ def test_generate_with_lifespan_service(client: TestClient) -> None:
     )
 
     assert response.status_code == 200
-    assert response.json() == {"text": "Once generated"}
+    body = response.json()
+    assert body["text"] == "Once generated"
+    assert body["generated_tokens"] == 10
+    assert body["latency_ms"] >= 0
+
+
+def test_generate_unknown_character_returns_400(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/generate",
+        json={
+            "prompt": "你",
+            "max_tokens": 20,
+            "temperature": 0.8,
+            "top_k": 10,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Unsupported character: '你'",
+    }
 
 
 def test_generate_with_replaced_service_dependency(
@@ -102,7 +133,11 @@ def test_generate_with_replaced_service_dependency(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"text": "fake response"}
+    assert response.json() == {
+        "text": "fake response",
+        "generated_tokens": 7,
+        "latency_ms": 12.5,
+    }
     assert fake_service.call == {
         "prompt": "Once",
         "max_tokens": 20,

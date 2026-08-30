@@ -11,6 +11,7 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "pydantic",
+    "pydantic-settings",
     "torch",
     "uvicorn",
 ]
@@ -30,4 +31,3 @@ testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py310"
-
